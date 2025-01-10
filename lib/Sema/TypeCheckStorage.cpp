@@ -2430,6 +2430,32 @@ static AccessorDecl *createGetterPrototype(AbstractStorageDecl *storage,
   return getter;
 }
 
+static AccessorDecl *createInitAccessorPrototype(AbstractStorageDecl *storage,
+                                                ASTContext &ctx) {
+  
+  SourceLoc loc = storage->getLoc();
+  auto *initParams = ParameterList::createEmpty(ctx);
+
+  auto *initAccessor = AccessorDecl::create(
+      ctx,
+      /*AccessorLoc=*/loc,
+      /*AccessorKeywordLoc=*/loc,
+      AccessorKind::Init,    
+      storage,
+      /*Async=*/false, SourceLoc(),
+      /*Throws=*/false, SourceLoc(),
+      /*ThrownType=*/TypeLoc(),
+      initParams,
+      /*ResultType=*/Type(),
+      storage->getDeclContext());
+
+  initAccessor->setSynthesized();
+  
+  finishImplicitAccessor(initAccessor, ctx);
+
+  return initAccessor;
+} 
+
 static void addPropertyWrapperAccessorAvailability(VarDecl *var, AccessorKind accessorKind,
                                                    SmallVectorImpl<const Decl *> &asAvailableAs) {
   AccessorDecl *synthesizedFrom = nullptr;
@@ -2688,6 +2714,10 @@ SynthesizeAccessorRequest::evaluate(Evaluator &evaluator,
   case AccessorKind::Modify2:
     return createModify2CoroutinePrototype(storage, ctx);
 
+  case AccessorKind::Init: 
+    return createInitAccessorPrototype(storage, ctx);
+
+#define INIT_ACCESSOR(ID, KEYWORD)
 #define OPAQUE_ACCESSOR(ID, KEYWORD)
 #define ACCESSOR(ID) \
   case AccessorKind::ID:
