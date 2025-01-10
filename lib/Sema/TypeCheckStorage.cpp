@@ -2445,9 +2445,7 @@ static AccessorDecl *createInitAccessorPrototype(AbstractStorageDecl *storage,
 
   // Set as synthesized and configure the body kind
   initAccessor->setSynthesized();
-  initAccessor->configureAsSILSynthesized(
-    AbstractFunctionDecl::BodyKind::SILSynthesize, 
-    AbstractFunctionDecl::SILSynthesizeKind::Init);
+  initAccessor->setIsPropertyWrapperInitAccessor();
   
   return initAccessor;
 } 
