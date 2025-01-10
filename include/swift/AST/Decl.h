@@ -7411,8 +7411,8 @@ public:
   enum class SILSynthesizeKind {
     None,
     MemberwiseInitializer,
-    DistributedActorFactory
-
+    DistributedActorFactory,
+    Init
     // This enum currently needs to fit in a 2-bit bitfield.
   };
 
@@ -8416,6 +8416,11 @@ public:
 
   bool isInitAccessor() const {
     return (getAccessorKind() == AccessorKind::Init);
+  }
+
+  void configureAsSILSynthesized(BodyKind bodyKind, SILSynthesizeKind synthesizeKind) {
+    setBodyKind(bodyKind);
+    setSILSynthesizeKind(synthesizeKind);
   }
 
   /// \returns true if this is non-mutating due to applying a 'mutating'
