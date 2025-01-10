@@ -3170,7 +3170,13 @@ void AbstractStorageDecl::visitExpectedOpaqueAccessors(
     visit(AccessorKind::Modify);
 
   if (requiresOpaqueModify2Coroutine())
-    visit(AccessorKind::Modify2);
+    visit(AccessorKind::Modify2); 
+
+  if (auto var = dyn_cast<VarDecl>(this)) {
+    if (var->hasAttachedPropertyWrapper()) {
+      visit(AccessorKind::Init);
+    }
+  }
 }
 
 void AbstractStorageDecl::visitOpaqueAccessors(
