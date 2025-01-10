@@ -2430,26 +2430,19 @@ static AccessorDecl *createGetterPrototype(AbstractStorageDecl *storage,
 static AccessorDecl *createInitAccessorPrototype(AbstractStorageDecl *storage,
                                                 ASTContext &ctx) {
   
-  SourceLoc loc = storage->getLoc();
-  auto *initParams = ParameterList::createEmpty(ctx);
-
-  auto *initAccessor = AccessorDecl::create(
-      ctx,
-      /*AccessorLoc=*/loc,
-      /*AccessorKeywordLoc=*/loc,
-      AccessorKind::Init,    
-      storage,
-      /*Async=*/false, SourceLoc(),
-      /*Throws=*/false, SourceLoc(),
+  auto initAccessor = AccessorDecl::createImplicit(
+      ctx, AccessorKind::Init, storage,
+      /*Async=*/false, /*Throws=*/false, 
       /*ThrownType=*/TypeLoc(),
-      initParams,
       /*ResultType=*/Type(),
       storage->getDeclContext());
 
+  // Set as synthesized and configure the body kind
   initAccessor->setSynthesized();
+  initAccessor->configureAsSILSynthesized(
+    AbstractFunctionDecl::BodyKind::SILSynthesize, 
+    AbstractFunctionDecl::SILSynthesizeKind::Init);
   
-  finishImplicitAccessor(initAccessor, ctx);
-
   return initAccessor;
 } 
 
@@ -2590,7 +2583,6 @@ createCoroutineAccessorPrototype(AbstractStorageDecl *storage,
                                  AccessorKind kind,
                                 ASTContext &ctx) {
   assert(isYieldingAccessor(kind));
-
   SourceLoc loc = storage->getLoc();
 
   bool isMutating = storage->isGetterMutating();
