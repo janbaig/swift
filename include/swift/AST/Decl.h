@@ -7782,6 +7782,13 @@ public:
     setSILSynthesizeKind(SILSynthesizeKind::MemberwiseInitializer);
   }
 
+  // Note that this is an init accessor being synthesized for a property wrapper
+  // it's body will be synthesized by SILGen
+  void setIsPropertyWrapperInitAccessor() {
+    setBodyKind(BodyKind::SILSynthesize);
+    setSILSynthesizeKind(SILSynthesizeKind::Init);
+  }
+
   /// Mark that the body should be filled in to be a factory method for creating
   /// a distributed actor.
   void setDistributedActorFactory() {
@@ -8404,11 +8411,6 @@ public:
 
   bool isInitAccessor() const {
     return (getAccessorKind() == AccessorKind::Init);
-  }
-
-  void configureAsSILSynthesized(BodyKind bodyKind, SILSynthesizeKind synthesizeKind) {
-    setBodyKind(bodyKind);
-    setSILSynthesizeKind(synthesizeKind);
   }
 
   /// \returns true if this is non-mutating due to applying a 'mutating'
