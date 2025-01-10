@@ -2437,6 +2437,9 @@ static AccessorDecl *createInitAccessorPrototype(AbstractStorageDecl *storage,
       /*ResultType=*/Type(),
       storage->getDeclContext());
 
+  auto *emptyParams = ParameterList::createEmpty(ctx);
+  initAccessor->setParameters(emptyParams);
+
   // Set as synthesized and configure the body kind
   initAccessor->setSynthesized();
   initAccessor->configureAsSILSynthesized(
