@@ -3020,9 +3020,12 @@ bool AbstractStorageDecl::requiresOpaqueAccessor(AccessorKind kind) const {
     return requiresOpaqueModifyCoroutine();
   case AccessorKind::Modify2:
     return requiresOpaqueModify2Coroutine();
+  case AccessorKind::Init:
+    return requiresOpaqueInitAccessor();
 
   // Other accessors are never part of the opaque-accessors set.
 #define OPAQUE_ACCESSOR(ID, KEYWORD)
+#define INIT_ACCESSOR(ID, KEYWORD)
 #define ACCESSOR(ID) \
   case AccessorKind::ID:
 #include "swift/AST/AccessorKinds.def"

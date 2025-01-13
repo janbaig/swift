@@ -6045,6 +6045,9 @@ public:
   /// Does this storage require a 'set' accessor in its opaque-accessors set?
   bool requiresOpaqueSetter() const { return supportsMutation(); }
 
+  /// TODO: need to flesh out any constraints here  
+  bool requiresOpaqueInitAccessor() const { return true; }
+
   /// Does this storage require a '_modify' accessor in its opaque-accessors
   /// set?
   bool requiresOpaqueModifyCoroutine() const;
