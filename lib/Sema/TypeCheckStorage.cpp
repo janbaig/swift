@@ -2430,19 +2430,45 @@ static AccessorDecl *createGetterPrototype(AbstractStorageDecl *storage,
 static AccessorDecl *createInitAccessorPrototype(AbstractStorageDecl *storage,
                                                 ASTContext &ctx) {
   
+  auto varDecl = dyn_cast<VarDecl>(storage);
+  assert(varDecl->hasAttachedPropertyWrapper());
+  
   auto initAccessor = AccessorDecl::createImplicit(
-      ctx, AccessorKind::Init, storage,
-      /*Async=*/false, /*Throws=*/false, 
-      /*ThrownType=*/TypeLoc(),
-      /*ResultType=*/Type(),
-      storage->getDeclContext());
+    ctx, AccessorKind::Init, storage,
+    /*Async=*/false, /*Throws=*/false, 
+    /*ThrownType=*/TypeLoc(),
+    /*ResultType=*/Type(),
+    storage->getDeclContext());
 
-  auto *emptyParams = ParameterList::createEmpty(ctx);
-  initAccessor->setParameters(emptyParams);
+  // TODO: replace newValue later on
+  auto implicitParams = ParamDecl::createImplicit(
+    ctx, Identifier(), 
+    ctx.getIdentifier("newValue"), 
+    storage->getInterfaceType(), 
+    storage->getDeclContext());
+    
+  auto *paramList = ParameterList::create(ctx, {implicitParams});
+  initAccessor->setParameters(paramList);
 
-  // Set as synthesized and configure the body kind
+  // Set as synthesized, configure the accessor body kind 
   initAccessor->setSynthesized();
   initAccessor->setIsPropertyWrapperInitAccessor();
+  initAccessor->setSelfAccessKind(SelfAccessKind::Mutating); // explain why
+
+  // construct initializes array 
+  auto backingStorageIdentifier = varDecl->getPropertyWrapperBackingProperty()->getName(); 
+  ArrayRef<Identifier> initializesList = {backingStorageIdentifier};
+  ArrayRef<Identifier> accessesList;
+  
+   // Create and attach the attribute
+  auto *attribute = StorageRestrictionsAttr::create(
+    ctx,
+    /*AtLoc=*/SourceLoc(),
+    /*Range=*/SourceRange(),
+    initializesList,
+    accessesList);
+  
+  initAccessor->getAttrs().add(attribute);
   
   return initAccessor;
 } 
