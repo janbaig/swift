@@ -1778,12 +1778,37 @@ void SILGenFunction::emitInitAccessor(AccessorDecl *accessor) {
                 accessor->getEffectiveThrownErrorType(),
                 CleanupLocation(accessor));
 
-  emitProfilerIncrement(accessor->getTypecheckedBody());
+  auto varDecl = dyn_cast<VarDecl>(accessor->getStorage());
+  if (varDecl->hasAttachedPropertyWrapper()) {
+    // emit a synthesized function body 
+    auto backingStorage = varDecl->getPropertyWrapperBackingProperty();
+    auto *parentNominal = varDecl->getDeclContext()->getSelfNominalTypeDecl();
+    auto subs = getSubstitutionsForPropertyInitializer(parentNominal, parentNominal);
+    
+    SILValue resultSlot = F.begin()->getArgument(0);
+    SILValue newValueSIL = F.begin()->getArgument(1);
+    auto &tl = getTypeLowering(newValueSIL->getType()); 
 
-  // Emit the actual function body as usual
-  emitStmt(accessor->getTypecheckedBody());
+    ManagedValue mv = emitManagedRValueWithCleanup(newValueSIL, tl);
+    RValue rvalue(*this, loc, 
+                  newValueSIL->getType().getASTType()->getCanonicalType(), 
+                  mv);
+
+    RValue wrapperRValue = maybeEmitPropertyWrapperInitFromValue(*this, loc, 
+                                                                backingStorage, subs, 
+                                                                std::move(rvalue));
+    
+    SILValue resultValue = std::move(wrapperRValue).forwardAsSingleValue(*this, loc);
+
+    B.createStore(loc, resultValue, resultSlot, StoreOwnershipQualifier::Trivial);
+
+  } else {
+    emitProfilerIncrement(accessor->getTypecheckedBody());
+    // Emit the explicit function body as usual
+    emitStmt(accessor->getTypecheckedBody());
+  }
 
   emitEpilog(accessor);
-
   mergeCleanupBlocks();
+
 }
