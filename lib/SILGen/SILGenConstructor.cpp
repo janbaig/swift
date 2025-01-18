@@ -1785,7 +1785,9 @@ void SILGenFunction::emitInitAccessor(AccessorDecl *accessor) {
     auto *parentNominal = varDecl->getDeclContext()->getSelfNominalTypeDecl();
     auto subs = getSubstitutionsForPropertyInitializer(parentNominal, parentNominal);
     
-    SILValue resultSlot = F.begin()->getArgument(0);
+    ParamDecl *outParamDecl = InitAccessorArgumentMappings[backingStorage];
+    SILValue markedAddr = VarLocs[outParamDecl].value;
+
     SILValue newValueSIL = F.begin()->getArgument(1);
     auto &tl = getTypeLowering(newValueSIL->getType()); 
 
@@ -1800,7 +1802,16 @@ void SILGenFunction::emitInitAccessor(AccessorDecl *accessor) {
     
     SILValue resultValue = std::move(wrapperRValue).forwardAsSingleValue(*this, loc);
 
-    B.createStore(loc, resultValue, resultSlot, StoreOwnershipQualifier::Trivial);
+    auto beginAcc = B.createBeginAccess(
+      loc, markedAddr,
+      SILAccessKind::Modify,
+      SILAccessEnforcement::Unknown,
+      /* noNestedConflict */ false,
+      /* fromBuiltin */ false
+    );
+
+    B.createAssign(loc, resultValue, beginAcc, AssignOwnershipQualifier::Unknown);
+    B.createEndAccess(loc, beginAcc, false);
 
   } else {
     emitProfilerIncrement(accessor->getTypecheckedBody());
