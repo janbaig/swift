@@ -3439,13 +3439,17 @@ PropertyWrapperAuxiliaryVariablesRequest::evaluate(Evaluator &evaluator,
     backingVar->setImplicit();
     backingVar->setOriginalWrappedProperty(var);
 
+    Type wrapperType = wrapperInfo.valueVar->getInterfaceType();
+    backingVar->setInterfaceType(wrapperType);
+
     // The backing storage is 'private'.
     backingVar->overwriteAccess(AccessLevel::Private);
     backingVar->overwriteSetterAccess(AccessLevel::Private);
-
-    Pattern *pattern = NamedPattern::createImplicit(ctx, backingVar);
+    
+    auto *namedPattern = NamedPattern::createImplicit(ctx, backingVar);
+    auto *typedPattern = TypedPattern::createImplicit(ctx, namedPattern, wrapperType);
     auto *PB = PatternBindingDecl::createImplicit(
-        ctx, StaticSpellingKind::None, pattern, /*initializer=*/nullptr, dc,
+        ctx, StaticSpellingKind::None, typedPattern, /*initializer=*/nullptr, dc,
         backingVar->getStartLoc());
 
     backingVar->setParentPatternBinding(PB);
