@@ -3443,6 +3443,13 @@ PropertyWrapperAuxiliaryVariablesRequest::evaluate(Evaluator &evaluator,
     backingVar->overwriteAccess(AccessLevel::Private);
     backingVar->overwriteSetterAccess(AccessLevel::Private);
 
+    Pattern *pattern = NamedPattern::createImplicit(ctx, backingVar);
+    auto *PB = PatternBindingDecl::createImplicit(
+        ctx, StaticSpellingKind::None, pattern, /*initializer=*/nullptr, dc,
+        backingVar->getStartLoc());
+
+    backingVar->setParentPatternBinding(PB);
+
     addMemberToContextIfNeeded(backingVar, dc, var);
   }
 
