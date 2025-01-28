@@ -1711,18 +1711,18 @@ void SILGenFunction::emitIVarInitializer(SILDeclRef ivarInitializer) {
 
 static void emitImplicitInitAccessor(SILGenFunction &SGF, SILLocation loc, 
                                     VarDecl *varDecl, ParamDecl *outParamDecl, 
-                                    SILValue newValueSIL) {
+                                    SILValue newValueParam) {
 
   auto backingStorage = varDecl->getPropertyWrapperBackingProperty();
   auto *parentNominal = varDecl->getDeclContext()->getSelfNominalTypeDecl();
   auto subs = getSubstitutionsForPropertyInitializer(parentNominal, parentNominal);
 
   SILValue markedAddr = SGF.VarLocs[outParamDecl].value;
-  auto &tl = SGF.getTypeLowering(newValueSIL->getType());
+  auto &tl = SGF.getTypeLowering(newValueParam->getType());
 
-  ManagedValue mv = SGF.emitManagedRValueWithCleanup(newValueSIL, tl);
+  ManagedValue mv = SGF.emitManagedRValueWithCleanup(newValueParam, tl);
   RValue rvalue(SGF, loc, 
-                newValueSIL->getType().getASTType()->getCanonicalType(), 
+                newValueParam->getType().getASTType()->getCanonicalType(), 
                 mv);
 
   RValue wrapperRValue = maybeEmitPropertyWrapperInitFromValue(SGF, loc, 
@@ -1731,16 +1731,7 @@ static void emitImplicitInitAccessor(SILGenFunction &SGF, SILLocation loc,
 
   SILValue resultValue = std::move(wrapperRValue).forwardAsSingleValue(SGF, loc);
 
-  auto beginAcc = SGF.B.createBeginAccess(
-      loc, markedAddr,
-      SILAccessKind::Modify,
-      SILAccessEnforcement::Unknown,
-      /* noNestedConflict */ false,
-      /* fromBuiltin */ false
-  );
-
-  SGF.B.createAssign(loc, resultValue, beginAcc, AssignOwnershipQualifier::Unknown);
-  SGF.B.createEndAccess(loc, beginAcc, false);
+  SGF.B.createAssign(loc, resultValue, markedAddr, AssignOwnershipQualifier::Unknown);
 }
 
 void SILGenFunction::emitInitAccessor(AccessorDecl *accessor) {
