@@ -2453,7 +2453,12 @@ static AccessorDecl *createInitAccessorPrototype(AbstractStorageDecl *storage,
   // Set as synthesized, configure the accessor body kind 
   initAccessor->setSynthesized();
   initAccessor->setIsPropertyWrapperInitAccessor();
-  initAccessor->setSelfAccessKind(SelfAccessKind::Mutating); // explain why
+
+  // Set mutation type
+  auto selfAccessKind = storage->getDeclContext()->getSelfClassDecl()
+    ? SelfAccessKind::NonMutating // for reference types (e.g classes)
+    : SelfAccessKind::Mutating;   // for value types (e.g structs)
+  initAccessor->setSelfAccessKind(selfAccessKind); 
 
   // construct initializes array 
   auto backingStorageIdentifier = varDecl->getPropertyWrapperBackingProperty()->getName(); 
