@@ -3152,9 +3152,12 @@ bool AbstractStorageDecl::requiresOpaqueAccessor(AccessorKind kind) const {
     return requiresOpaqueModifyCoroutine();
   case AccessorKind::Modify2:
     return requiresOpaqueModify2Coroutine();
+  case AccessorKind::Init:
+    return requiresOpaqueInitAccessor();
 
   // Other accessors are never part of the opaque-accessors set.
 #define OPAQUE_ACCESSOR(ID, KEYWORD)
+#define INIT_ACCESSOR(ID, KEYWORD)
 #define ACCESSOR(ID) \
   case AccessorKind::ID:
 #include "swift/AST/AccessorKinds.def"
@@ -3302,7 +3305,13 @@ void AbstractStorageDecl::visitExpectedOpaqueAccessors(
     visit(AccessorKind::Modify);
 
   if (requiresOpaqueModify2Coroutine())
-    visit(AccessorKind::Modify2);
+    visit(AccessorKind::Modify2); 
+
+  if (auto var = dyn_cast<VarDecl>(this)) {
+    if (var->hasAttachedPropertyWrapper()) {
+      visit(AccessorKind::Init);
+    }
+  }
 }
 
 void AbstractStorageDecl::visitOpaqueAccessors(

@@ -6181,6 +6181,9 @@ public:
   /// Does this storage require a 'set' accessor in its opaque-accessors set?
   bool requiresOpaqueSetter() const { return supportsMutation(); }
 
+  /// TODO: need to flesh out any constraints here  
+  bool requiresOpaqueInitAccessor() const { return true; }
+
   /// Does this storage require a '_modify' accessor in its opaque-accessors
   /// set?
   bool requiresOpaqueModifyCoroutine() const;
@@ -7558,8 +7561,8 @@ public:
   enum class SILSynthesizeKind {
     None,
     MemberwiseInitializer,
-    DistributedActorFactory
-
+    DistributedActorFactory,
+    Init
     // This enum currently needs to fit in a 2-bit bitfield.
   };
 
@@ -7935,6 +7938,13 @@ public:
     assert(isa<ConstructorDecl>(this));
     setBodyKind(BodyKind::SILSynthesize);
     setSILSynthesizeKind(SILSynthesizeKind::MemberwiseInitializer);
+  }
+
+  // Note that this is an init accessor being synthesized for a property wrapper
+  // it's body will be synthesized by SILGen
+  void setIsPropertyWrapperInitAccessor() {
+    setBodyKind(BodyKind::SILSynthesize);
+    setSILSynthesizeKind(SILSynthesizeKind::Init);
   }
 
   /// Mark that the body should be filled in to be a factory method for creating

@@ -2369,6 +2369,57 @@ static AccessorDecl *createGetterPrototype(AbstractStorageDecl *storage,
   return getter;
 }
 
+static AccessorDecl *createInitAccessorPrototype(AbstractStorageDecl *storage,
+                                                ASTContext &ctx) {
+  
+  auto varDecl = dyn_cast<VarDecl>(storage);
+  assert(varDecl->hasAttachedPropertyWrapper());
+  
+  auto initAccessor = AccessorDecl::createImplicit(
+    ctx, AccessorKind::Init, storage,
+    /*Async=*/false, /*Throws=*/false, 
+    /*ThrownType=*/TypeLoc(),
+    /*ResultType=*/Type(),
+    storage->getDeclContext());
+
+  // TODO: replace newValue later on
+  auto implicitParams = ParamDecl::createImplicit(
+    ctx, Identifier(), 
+    ctx.getIdentifier("newValue"), 
+    storage->getInterfaceType(), 
+    storage->getDeclContext());
+    
+  auto *paramList = ParameterList::create(ctx, {implicitParams});
+  initAccessor->setParameters(paramList);
+
+  // Set as synthesized, configure the accessor body kind 
+  initAccessor->setSynthesized();
+  initAccessor->setIsPropertyWrapperInitAccessor();
+
+  // Set mutation type
+  auto selfAccessKind = storage->getDeclContext()->getSelfClassDecl()
+    ? SelfAccessKind::NonMutating // for reference types (e.g classes)
+    : SelfAccessKind::Mutating;   // for value types (e.g structs)
+  initAccessor->setSelfAccessKind(selfAccessKind); 
+
+  // construct initializes array 
+  auto backingStorageIdentifier = varDecl->getPropertyWrapperBackingProperty()->getName(); 
+  ArrayRef<Identifier> initializesList = {backingStorageIdentifier};
+  ArrayRef<Identifier> accessesList;
+  
+   // Create and attach the attribute
+  auto *attribute = StorageRestrictionsAttr::create(
+    ctx,
+    /*AtLoc=*/SourceLoc(),
+    /*Range=*/SourceRange(),
+    initializesList,
+    accessesList);
+  
+  initAccessor->getAttrs().add(attribute);
+  
+  return initAccessor;
+} 
+
 static void addPropertyWrapperAccessorAvailability(VarDecl *var, AccessorKind accessorKind,
                                                    SmallVectorImpl<const Decl *> &asAvailableAs) {
   AccessorDecl *synthesizedFrom = nullptr;
@@ -2506,7 +2557,6 @@ createCoroutineAccessorPrototype(AbstractStorageDecl *storage,
                                  AccessorKind kind,
                                 ASTContext &ctx) {
   assert(isYieldingAccessor(kind));
-
   SourceLoc loc = storage->getLoc();
 
   bool isMutating = storage->isGetterMutating();
@@ -2627,6 +2677,10 @@ SynthesizeAccessorRequest::evaluate(Evaluator &evaluator,
   case AccessorKind::Modify2:
     return createModify2CoroutinePrototype(storage, ctx);
 
+  case AccessorKind::Init: 
+    return createInitAccessorPrototype(storage, ctx);
+
+#define INIT_ACCESSOR(ID, KEYWORD)
 #define OPAQUE_ACCESSOR(ID, KEYWORD)
 #define ACCESSOR(ID) \
   case AccessorKind::ID:
@@ -3332,9 +3386,20 @@ PropertyWrapperAuxiliaryVariablesRequest::evaluate(Evaluator &evaluator,
     backingVar->setImplicit();
     backingVar->setOriginalWrappedProperty(var);
 
+    Type wrapperType = wrapperInfo.valueVar->getInterfaceType();
+    backingVar->setInterfaceType(wrapperType);
+
     // The backing storage is 'private'.
     backingVar->overwriteAccess(AccessLevel::Private);
     backingVar->overwriteSetterAccess(AccessLevel::Private);
+    
+    auto *namedPattern = NamedPattern::createImplicit(ctx, backingVar);
+    auto *typedPattern = TypedPattern::createImplicit(ctx, namedPattern, wrapperType);
+    auto *PB = PatternBindingDecl::createImplicit(
+        ctx, StaticSpellingKind::None, typedPattern, /*initializer=*/nullptr, dc,
+        backingVar->getStartLoc());
+
+    backingVar->setParentPatternBinding(PB);
 
     addMemberToContextIfNeeded(backingVar, dc, var);
   }
