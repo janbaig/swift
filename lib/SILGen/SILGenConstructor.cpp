@@ -1722,13 +1722,11 @@ static void emitImplicitInitAccessor(SILGenFunction &SGF, SILLocation loc,
   RValue wrapperRValue = maybeEmitPropertyWrapperInitFromValue(
       SGF, loc, backingStorage, subs, std::move(newValueRValue));
 
-  // Then forward the wrapper result
-  SILValue resultValue =
-      std::move(wrapperRValue).forwardAsSingleValue(SGF, loc);
+  SILValue outParamDeclAddr = SGF.VarLocs[outParamDecl].value;
+  InitializationPtr init(new KnownAddressInitialization(outParamDeclAddr));
 
-  // Finally, store the fully initialized value into the outParamDecl's VarLoc
-  SILValue markedAddr = SGF.VarLocs[outParamDecl].value;
-  SGF.B.createAssign(loc, resultValue, markedAddr, AssignOwnershipQualifier::Unknown);
+  // Then forward the wrapper result
+  std::move(wrapperRValue).forwardInto(SGF, loc, init.get());
 }
 
 void SILGenFunction::emitInitAccessor(AccessorDecl *accessor) {

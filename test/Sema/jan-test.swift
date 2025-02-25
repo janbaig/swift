@@ -1,4 +1,4 @@
-// RUN: %target-swift-emit-silgen -verify %s
+// RUN: %target-run-simple-swift -verify %s
 
 @propertyWrapper 
 struct Wrapper {
