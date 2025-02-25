@@ -1710,28 +1710,24 @@ void SILGenFunction::emitIVarInitializer(SILDeclRef ivarInitializer) {
   emitEpilog(loc);
 }
 
-static void emitImplicitInitAccessor(SILGenFunction &SGF, SILLocation loc, 
-                                    VarDecl *varDecl, ParamDecl *outParamDecl, 
-                                    SILValue newValueParam) {
-
+static void emitImplicitInitAccessor(SILGenFunction &SGF, SILLocation loc,
+                                     VarDecl *varDecl, ParamDecl *outParamDecl,
+                                     RValue &&newValueRValue) {
   auto backingStorage = varDecl->getPropertyWrapperBackingProperty();
   auto *parentNominal = varDecl->getDeclContext()->getSelfNominalTypeDecl();
-  auto subs = getSubstitutionsForPropertyInitializer(parentNominal, parentNominal);
 
+  auto subs =
+      getSubstitutionsForPropertyInitializer(parentNominal, parentNominal);
+
+  RValue wrapperRValue = maybeEmitPropertyWrapperInitFromValue(
+      SGF, loc, backingStorage, subs, std::move(newValueRValue));
+
+  // Then forward the wrapper result
+  SILValue resultValue =
+      std::move(wrapperRValue).forwardAsSingleValue(SGF, loc);
+
+  // Finally, store the fully initialized value into the outParamDecl's VarLoc
   SILValue markedAddr = SGF.VarLocs[outParamDecl].value;
-  auto &tl = SGF.getTypeLowering(newValueParam->getType());
-
-  ManagedValue mv = SGF.emitManagedRValueWithCleanup(newValueParam, tl);
-  RValue rvalue(SGF, loc, 
-                newValueParam->getType().getASTType()->getCanonicalType(), 
-                mv);
-
-  RValue wrapperRValue = maybeEmitPropertyWrapperInitFromValue(SGF, loc, 
-                                                              backingStorage, subs, 
-                                                              std::move(rvalue));
-
-  SILValue resultValue = std::move(wrapperRValue).forwardAsSingleValue(SGF, loc);
-
   SGF.B.createAssign(loc, resultValue, markedAddr, AssignOwnershipQualifier::Unknown);
 }
 
@@ -1775,13 +1771,39 @@ void SILGenFunction::emitInitAccessor(AccessorDecl *accessor) {
   // means after the "newValue" which is emitted by \c emitBasicProlog.
   auto accessedProperties = accessor->getAccessedProperties();
 
-  // Emit `newValue` argument.
-  emitBasicProlog(accessor, accessor->getParameters(),
-                  /*selfParam=*/nullptr, TupleType::getEmpty(F.getASTContext()),
-                  /*errorType=*/std::nullopt,
-                  /*throwsLoc=*/SourceLoc(),
-                  /*ignored parameters*/
-                  accessedProperties.size() + 1);
+  auto varDecl = dyn_cast<VarDecl>(accessor->getStorage());
+  bool hasPropertyWrapperAttached = varDecl->hasAttachedPropertyWrapper();
+  RValue newValueRValue = RValue();
+
+  if (hasPropertyWrapperAttached) {
+    CanType newValueInterfaceTy =
+        varDecl->getInterfaceType()->getCanonicalType();
+    DeclContext *dc = accessor->getDeclContext();
+    LoweredParamsInContextGenerator loweredParams(*this);
+
+    // emit the `newValue` argument
+    newValueRValue = emitImplicitValueConstructorArg(
+        *this, loc, newValueInterfaceTy, dc, loweredParams, nullptr);
+
+    ParamDecl *outParamDecl =
+        InitAccessorArgumentMappings[varDecl
+                                         ->getPropertyWrapperBackingProperty()];
+
+    // emit the synthesized init accessor body
+    emitImplicitInitAccessor(*this, loc, varDecl, outParamDecl,
+                             std::move(newValueRValue));
+
+  } else {
+    // if the above works for all cases of user defined init accessors, this
+    // else branch can be deleted
+    emitBasicProlog(accessor, accessor->getParameters(),
+                    /*selfParam=*/nullptr,
+                    TupleType::getEmpty(F.getASTContext()),
+                    /*errorType=*/std::nullopt,
+                    /*throwsLoc=*/SourceLoc(),
+                    /*ignored parameters*/
+                    accessedProperties.size() + 1);
+  }
 
   // Emit arguments for all `accesses` properties.
   if (!accessedProperties.empty()) {
@@ -1796,28 +1818,19 @@ void SILGenFunction::emitInitAccessor(AccessorDecl *accessor) {
     }
   }
 
-  // Emit `self` argument.
+  // Emit the `self` argument.
   emitConstructorMetatypeArg(*this, accessor);
 
-  prepareEpilog(accessor,
-                accessor->getResultInterfaceType(),
+  prepareEpilog(accessor, accessor->getResultInterfaceType(),
                 accessor->getEffectiveThrownErrorType(),
                 CleanupLocation(accessor));
 
-  auto varDecl = dyn_cast<VarDecl>(accessor->getStorage());
-  if (varDecl->hasAttachedPropertyWrapper()) {
-    // emit a synthesized function body 
-    ParamDecl *outParamDecl = InitAccessorArgumentMappings[varDecl->getPropertyWrapperBackingProperty()];
-    SILValue newValueSIL = F.begin()->getArgument(1);
-    emitImplicitInitAccessor(*this, loc, varDecl, outParamDecl, newValueSIL);
-
-  } else {
+  if (!hasPropertyWrapperAttached) {
     emitProfilerIncrement(accessor->getTypecheckedBody());
-    // Emit the explicit function body as usual
+    // Emit the explicit init accessor body
     emitStmt(accessor->getTypecheckedBody());
   }
 
   emitEpilog(accessor);
   mergeCleanupBlocks();
-
 }
