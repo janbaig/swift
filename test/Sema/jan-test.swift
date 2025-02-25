@@ -1,4 +1,4 @@
-// RUN: %target-run-simple-swift -verify %s
+// RUN: %target-swift-emit-silgen -verify %s
 
 @propertyWrapper 
 struct Wrapper {
@@ -8,7 +8,7 @@ struct Wrapper {
 
 struct myStruct {
     @Wrapper var x: [Int]
-    init(x: [Int]) { self.x = x}
+    // init(x: [Int]) { self.x = x}
 }
 
 myStruct(x: [4])
