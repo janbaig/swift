@@ -6754,6 +6754,10 @@ public:
   /// bound generic version.
   VarDecl *getPropertyWrapperBackingProperty() const;
 
+  // Retrieves the user defined init accesor or synthesizes one in the case
+  // where we have a property with an attached wrapper
+  AccessorDecl *getInitAccessor();
+
   /// Retrieve the projection var for a property that has an attached
   /// property wrapper with a \c projectedValue .
   VarDecl *getPropertyWrapperProjectionVar() const;

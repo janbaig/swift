@@ -318,7 +318,7 @@ bool HasInitAccessorRequest::evaluate(Evaluator &evaluator,
   if (!var)
     return false;
 
-  if (var->getAccessor(AccessorKind::Init))
+  if (var->getInitAccessor())
     return true;
 
   // Look to see whether it is possible that there is an init accessor.
