@@ -1719,13 +1719,14 @@ static void emitImplicitInitAccessor(SILGenFunction &SGF, SILLocation loc,
   auto subs =
       getSubstitutionsForPropertyInitializer(parentNominal, parentNominal);
 
+  // Emit the call to the backing storage initializer
   RValue wrapperRValue = maybeEmitPropertyWrapperInitFromValue(
       SGF, loc, backingStorage, subs, std::move(newValueRValue));
 
-  SILValue outParamDeclAddr = SGF.VarLocs[outParamDecl].value;
-  InitializationPtr init(new KnownAddressInitialization(outParamDeclAddr));
+  SILValue backingStorageAddr = SGF.VarLocs[outParamDecl].value;
+  InitializationPtr init(new KnownAddressInitialization(backingStorageAddr));
 
-  // Then forward the wrapper result
+  // Forward the result to the backing storage's address
   std::move(wrapperRValue).forwardInto(SGF, loc, init.get());
 }
 
