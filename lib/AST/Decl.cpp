@@ -7329,6 +7329,13 @@ bool AbstractStorageDecl::hasInitAccessor() const {
       HasInitAccessorRequest{const_cast<AbstractStorageDecl *>(this)}, false);
 }
 
+AccessorDecl *VarDecl::getInitAccessor() {
+  if (hasAttachedPropertyWrapper()) {
+    return getOpaqueAccessor(AccessorKind::Init);
+  }
+  return getAccessor(AccessorKind::Init);
+}
+
 VarDecl::VarDecl(DeclKind kind, bool isStatic, VarDecl::Introducer introducer,
                  SourceLoc nameLoc, Identifier name,
                  DeclContext *dc, StorageIsMutable_t supportsMutation)
