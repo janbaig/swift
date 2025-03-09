@@ -1646,7 +1646,7 @@ std::optional<unsigned> swift::expandAccessors(AbstractStorageDecl *storage,
     // such cases could be used for memberwise initialization.
     if (auto var = dyn_cast<VarDecl>(storage)) {
       if (auto binding = var->getParentPatternBinding();
-          !var->getAccessor(AccessorKind::Init)) {
+          !var->getInitAccessor()) {
         unsigned index = binding->getPatternEntryIndexForVarDecl(var);
         binding->setInitializerSubsumed(index);
       }
