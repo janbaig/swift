@@ -2972,7 +2972,7 @@ public:
       // make sure that it subsumes initializers of all of its "initializes"
       // stored properties.
       // FIXME: This should be requestified.
-      auto *initAccessor = var->getAccessor(AccessorKind::Init);
+      auto *initAccessor = var->getInitAccessor();
       if (initAccessor && PBD->isInitialized(0)) {
         for (auto *property : initAccessor->getInitializedProperties()) {
           auto *propertyBinding = property->getParentPatternBinding();

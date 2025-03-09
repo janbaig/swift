@@ -1035,7 +1035,7 @@ bool AreAllStoredPropertiesDefaultInitableRequest::evaluate(
 
             // Treat an init accessor property that doesn't initialize other
             // properties  as stored for initialization purposes.
-            if (auto *initAccessor = VD->getAccessor(AccessorKind::Init)) {
+            if (auto *initAccessor = VD->getInitAccessor()) {
               HasStorage |= initAccessor->getInitializedProperties().empty();
             }
           });
@@ -1487,7 +1487,7 @@ HasMemberwiseInitRequest::evaluate(Evaluator &evaluator,
 
         // Check whether use of init accessors results in access to
         // uninitialized properties.
-        if (auto *initAccessor = var->getAccessor(AccessorKind::Init)) {
+        if (auto *initAccessor = var->getInitAccessor()) {
           // Make sure that all properties accessed by init accessor
           // are previously initialized.
           for (auto *property : initAccessor->getAccessedProperties()) {
@@ -1532,7 +1532,7 @@ HasMemberwiseInitRequest::evaluate(Evaluator &evaluator,
         decl, diag::cannot_synthesize_memberwise_due_to_property_init_order);
 
     for (const auto &invalid : invalidOrderings) {
-      auto *accessor = invalid.first->getAccessor(AccessorKind::Init);
+      auto *accessor = invalid.first->getInitAccessor();
       diags.diagnose(accessor->getLoc(),
                      diag::out_of_order_access_in_init_accessor,
                      invalid.first->getName(), invalid.second);

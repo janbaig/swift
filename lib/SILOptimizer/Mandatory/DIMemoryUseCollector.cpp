@@ -97,7 +97,7 @@ static unsigned getElementCountRec(TypeExpansionContext context,
         NumElements += getElementCountRec(
             context, Module, T.getFieldType(VD, Module, context), false);
       for (auto *P : NTD->getInitAccessorProperties()) {
-        auto *init = P->getAccessor(AccessorKind::Init);
+        auto *init = P->getInitAccessor();
         if (init->getInitializedProperties().empty())
           ++NumElements;
       }
@@ -458,7 +458,7 @@ DIMemoryObjectInfo::getPathStringToElement(unsigned Element,
       }
 
       for (auto *property : NTD->getInitAccessorProperties()) {
-        auto *init = property->getAccessor(AccessorKind::Init);
+        auto *init = property->getInitAccessor();
         if (init->getInitializedProperties().empty()) {
           if (Element == 0)
             return property;
@@ -513,7 +513,7 @@ bool DIMemoryObjectInfo::isElementLetProperty(unsigned Element) const {
   }
 
   for (auto *property : NTD->getInitAccessorProperties()) {
-    auto *init = property->getAccessor(AccessorKind::Init);
+    auto *init = property->getInitAccessor();
     if (init->getInitializedProperties().empty()) {
       if (Element == 0)
         return !property->getAccessor(AccessorKind::Set);
@@ -1273,7 +1273,7 @@ ElementUseCollector::collectAssignOrInitUses(AssignOrInitInst *Inst,
     auto initFieldAt = typeDC->getStoredProperties().size();
 
     for (auto *property : initAccessorProperties) {
-      auto initAccessor = property->getAccessor(AccessorKind::Init);
+      auto initAccessor = property->getInitAccessor();
       if (!initAccessor->getInitializedProperties().empty())
         continue;
 

@@ -8381,7 +8381,7 @@ bool VarDecl::isMemberwiseInitialized(bool preferDeclaredProperties) const {
   // memberwise initializable when it could be used to initialize
   // other stored properties.
   if (hasInitAccessor()) {
-    if (getAccessor(AccessorKind::Init))
+    if (getInitAccessor())
       return true;
   }
 

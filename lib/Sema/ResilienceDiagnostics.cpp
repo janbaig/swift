@@ -68,8 +68,8 @@ bool TypeChecker::diagnoseInlinableDeclRefAccess(SourceLoc loc,
     if (init->isDesignatedInit()) {
       auto *storage = dyn_cast<AbstractStorageDecl>(D);
       if (storage && storage->hasInitAccessor()) {
-        if (diagnoseInlinableDeclRefAccess(
-                loc, storage->getAccessor(AccessorKind::Init), where))
+        if (diagnoseInlinableDeclRefAccess(loc, storage->getInitAccessor(),
+                                           where))
           return true;
       }
     }

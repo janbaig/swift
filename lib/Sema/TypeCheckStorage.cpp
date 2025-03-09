@@ -378,7 +378,7 @@ MemberwiseInitPropertiesRequest::evaluate(Evaluator &evaluator,
     // If this property has an init accessor, it subsumes all of the stored properties
     // that the accessor initializes. Mark those stored properties as being subsumed; we'll
     // get back to them later.
-    if (auto initAccessor = var->getAccessor(AccessorKind::Init)) {
+    if (auto initAccessor = var->getInitAccessor()) {
       for (auto subsumed : initAccessor->getInitializedProperties()) {
         subsumedViaInitAccessor.insert(subsumed);
       }
@@ -499,7 +499,7 @@ const PatternBindingEntry *PatternBindingEntryRequest::evaluate(
 
   auto isInitAccessorProperty = [](Pattern *pattern) {
     auto *var = pattern->getSingleVar();
-    return var && var->getAccessor(AccessorKind::Init);
+    return var && var->getInitAccessor();
   };
 
   // If we have a type but no initializer, check whether the type is
