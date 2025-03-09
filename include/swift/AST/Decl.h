@@ -5972,6 +5972,10 @@ public:
   /// with it.
   bool hasInitAccessor() const;
 
+  /// Retrieves the user defined init accesor or synthesizes one in the case
+  /// where we have a property with an attached wrapper
+  AccessorDecl *getInitAccessor() const;
+
   /// Return true if this is a property that either has storage
   /// or init accessor associated with it.
   bool supportsInitialization() const {
@@ -6753,10 +6757,6 @@ public:
   /// generic type, the backing storage property will be the appropriate
   /// bound generic version.
   VarDecl *getPropertyWrapperBackingProperty() const;
-
-  // Retrieves the user defined init accesor or synthesizes one in the case
-  // where we have a property with an attached wrapper
-  AccessorDecl *getInitAccessor();
 
   /// Retrieve the projection var for a property that has an attached
   /// property wrapper with a \c projectedValue .
