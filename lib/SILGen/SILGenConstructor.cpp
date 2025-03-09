@@ -413,7 +413,7 @@ static void emitImplicitValueConstructor(SILGenFunction &SGF,
 
       // Handle situations where this stored propery is initialized
       // via a call to an init accessor on some other property.
-      if (auto *initAccessor = field->getAccessor(AccessorKind::Init)) {
+      if (auto *initAccessor = field->getInitAccessor()) {
         if (field->isMemberwiseInitialized(/*preferDeclaredProperties=*/true)) {
           assert(elti != eltEnd &&
                  "number of args does not match number of fields");
@@ -1659,7 +1659,7 @@ void SILGenFunction::emitMemberInitializers(DeclContext *dc,
       // Emit default initialization for an init accessor property.
       if (auto *var = pbd->getSingleVar()) {
         if (var->hasInitAccessor()) {
-          auto initAccessor = var->getAccessor(AccessorKind::Init);
+          auto initAccessor = var->getInitAccessor();
 
           // Make sure that initializations for the accessed properties
           // are emitted before the init accessor that uses them.

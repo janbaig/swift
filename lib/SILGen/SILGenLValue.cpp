@@ -1722,7 +1722,7 @@ namespace {
           fnDecl->getDeclContext()->getSelfNominalTypeDecl())
         return false;
 
-      auto *initAccessor = varDecl->getAccessor(AccessorKind::Init);
+      auto *initAccessor = varDecl->getInitAccessor();
       if (!initAccessor)
         return false;
 
@@ -1797,7 +1797,7 @@ namespace {
         // setter function as arguments. DefiniteInitialization will then decide
         // between the two functions, depending if it's an init call or a
         // set call.
-        SILDeclRef initAccessorRef(Storage->getAccessor(AccessorKind::Init));
+        SILDeclRef initAccessorRef(Storage->getInitAccessor());
         InitAccessorComponent IAC(Storage,
                                   initAccessorRef,
                                   IsSuper,
