@@ -1793,8 +1793,6 @@ void SILGenFunction::emitInitAccessor(AccessorDecl *accessor) {
                              std::move(newValueRValue));
 
   } else {
-    // if the above works for all cases of user defined init accessors, this
-    // else branch can be deleted
     emitBasicProlog(accessor, accessor->getParameters(),
                     /*selfParam=*/nullptr,
                     TupleType::getEmpty(F.getASTContext()),
