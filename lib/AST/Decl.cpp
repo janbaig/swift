@@ -5340,7 +5340,7 @@ NominalTypeDecl::getMemberwiseInitProperties() const {
 void NominalTypeDecl::collectPropertiesInitializableByInitAccessors(
     std::multimap<VarDecl *, VarDecl *> &result) const {
   for (auto *property : getInitAccessorProperties()) {
-    auto *initAccessor = property->getAccessor(AccessorKind::Init);
+    auto *initAccessor = property->getInitAccessor();
     for (auto *subsumed : initAccessor->getInitializedProperties())
       result.insert({subsumed, property});
   }
@@ -7329,11 +7329,14 @@ bool AbstractStorageDecl::hasInitAccessor() const {
       HasInitAccessorRequest{const_cast<AbstractStorageDecl *>(this)}, false);
 }
 
-AccessorDecl *VarDecl::getInitAccessor() {
-  if (hasAttachedPropertyWrapper()) {
-    return getOpaqueAccessor(AccessorKind::Init);
+AccessorDecl *AbstractStorageDecl::getInitAccessor() const {
+  if (auto varDecl = dyn_cast<VarDecl>(this)) {
+    if (varDecl->hasAttachedPropertyWrapper())
+      return getOpaqueAccessor(AccessorKind::Init);
+    else
+      return getAccessor(AccessorKind::Init);
   }
-  return getAccessor(AccessorKind::Init);
+  return nullptr;
 }
 
 VarDecl::VarDecl(DeclKind kind, bool isStatic, VarDecl::Introducer introducer,
