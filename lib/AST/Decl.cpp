@@ -3193,7 +3193,7 @@ void AbstractStorageDecl::visitExpectedOpaqueAccessors(
     visit(AccessorKind::Modify2); 
 
   if (auto var = dyn_cast<VarDecl>(this)) {
-    if (var->hasAttachedPropertyWrapper()) {
+    if (var->canEmitInitAccessorForWrapper()) {
       visit(AccessorKind::Init);
     }
   }
@@ -8066,6 +8066,12 @@ bool VarDecl::allAttachedPropertyWrappersHaveWrappedValueInit() const {
   }
   
   return true;
+}
+
+bool VarDecl::canEmitInitAccessorForWrapper() const {
+  return hasAttachedPropertyWrapper() && 
+        isPropertyMemberwiseInitializedWithWrappedType() &&
+        getDeclContext()->getSelfNominalTypeDecl();
 }
 
 PropertyWrapperTypeInfo

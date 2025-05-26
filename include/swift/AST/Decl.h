@@ -6568,7 +6568,11 @@ public:
   /// Whether all of the attached property wrappers have an init(wrappedValue:)
   /// initializer.
   bool allAttachedPropertyWrappersHaveWrappedValueInit() const;
-  
+ 
+  /// Whether an init accessor can be synthesized to support initialization 
+  /// for this var decl with an attached property wrapper
+  bool canEmitInitAccessorForWrapper() const;
+
   /// Retrieve the type of the attached property wrapper as a contextual
   /// type.
   ///
