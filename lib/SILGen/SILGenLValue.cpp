@@ -1884,6 +1884,8 @@ namespace {
 
         // The property wrapper backing initializer forms an instance of
         // the backing storage type from a wrapped value.
+        // TODO: Create a new init accessor thunk constant
+        SILDeclRef initializerConstant(field, SILDeclRef::Kind::PropertyWrappedFieldInitAccessor); 
         SILDeclRef initConstant(
             field, SILDeclRef::Kind::PropertyWrapperBackingInitializer);
         SILValue initFRef = SGF.emitGlobalFunctionRef(loc, initConstant);

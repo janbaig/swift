@@ -167,6 +167,10 @@ struct SILDeclRef {
 
     /// The asynchronous main entry-point function.
     AsyncEntryPoint,
+
+    // Emit an init accessor for a property with an attached property wrapper, 
+    // only for cases where an assign_by_wrapper is expected to be emitted
+    PropertyWrappedFieldInitAccessor
   };
 
   /// Represents the variants of a back deployable function.

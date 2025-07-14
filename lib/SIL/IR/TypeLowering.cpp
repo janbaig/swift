@@ -3967,6 +3967,8 @@ static CanAnyFunctionType getPropertyWrapperBackingInitializerInterfaceType(
                                  resultType, info);
 }
 
+static CanAnyFunctionType getPropertyWrappedFieldInitAccessorInterfaceType(TypeConverter &TC, SILDeclRef c) {}
+
 /// Get the type of a destructor function.
 static CanAnyFunctionType getDestructorInterfaceType(DestructorDecl *dd,
                                                      bool isDeallocating,
@@ -4210,6 +4212,8 @@ CanAnyFunctionType TypeConverter::makeConstantInterfaceType(SILDeclRef c) {
   case SILDeclRef::Kind::PropertyWrapperBackingInitializer:
   case SILDeclRef::Kind::PropertyWrapperInitFromProjectedValue:
     return getPropertyWrapperBackingInitializerInterfaceType(*this, c);
+  case SILDeclRef::Kind::PropertyWrappedFieldInitAccessor: 
+    return getPropertyWrappedFieldInitAccessorInterfaceType(*this, c);
   case SILDeclRef::Kind::IVarInitializer:
     return getIVarInitDestroyerInterfaceType(cast<ClassDecl>(vd),
                                              c.isForeign, false);
@@ -4252,6 +4256,7 @@ TypeConverter::getGenericSignatureWithCapturedEnvironments(SILDeclRef c) {
       vd->getInnermostDeclContext(), captureInfo);
   }
   case SILDeclRef::Kind::PropertyWrapperBackingInitializer:
+  case SILDeclRef::Kind::PropertyWrappedFieldInitAccessor:
   case SILDeclRef::Kind::PropertyWrapperInitFromProjectedValue: {
     // FIXME: It might be better to compute lowered local captures of
     // the property wrapper generator directly and collapse this into the
